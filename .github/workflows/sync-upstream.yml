@@ -1,0 +1,34 @@
+name: Sync fork with upstream
+
+on:
+  schedule:
+    # Daily at 07:17 Europe/Moscow (04:17 UTC).
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Fast-forward main from upstream
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sync the fork through the GitHub API
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api \
+            --method POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "X-GitHub-Api-Version: 2026-03-10" \
+            "repos/${GH_REPO}/merge-upstream" \
+            --field branch=main \
+            --jq '{message, merge_type, base_branch}'
